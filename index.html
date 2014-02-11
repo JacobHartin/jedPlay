@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+  <meta charset="utf-8">
+  <html>
+  <head>
+     <title>jedPlay</title>
+     <!--<link rel="stylesheet" href="css/style.css" />-->
+     
+     <link href="http://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+     <style>
+        body {
+          width: 100%;
+          margin: 0;
+          border: 0;
+          padding: 0;
+        }
+        
+        #sidebar {
+          width: 15%;
+          background-color: white;
+          border-right: 1px solid black;
+          height: 500px;
+          float: left;
+          box-sizing: border-box;
+          -moz-box-sizing: border-box;
+          -webkit-box-sizing: border-box;
+        }
+        
+        #files {
+          width: 85%;
+          height: 100px;
+          position: relative;
+          text-align: right;
+          -moz-opacity: 0;
+          filter: alpha(opacity: 0);
+          opacity: 0;
+          z-index: 2;
+          display: inline-block;
+          background-color: #fefefe;
+        }
+        #fileWrapper {
+          width: 85%;
+          height: 400px;
+          position: relative;
+          right: 0;
+          background: #dedede;
+          display: inline-block;
+        }
+        
+        #controls {
+          background: #ADD8E6;
+          text-align: center;
+          position: relative;
+          
+          height: 60px;
+        }
+        
+        .pause {
+          display: none;
+        }
+        
+        #volumeControls {
+          position: absolute;
+          right: 0;
+          top: 0;
+        }
+        
+        #playPause {
+          position: absolute;
+          left: 0;
+          top: 0;
+          border: 1px solid black;
+          border-radius: 10px;
+          padding: 10px;
+          cursor: pointer;
+          margin: 2.5px;
+        }
+        
+        audio {
+          display: none;
+        }
+        
+        ul {
+          list-style: none;
+        }
+        li {
+          border-bottom: 1px solid #5e5e5e;
+          padding-top: 5px;
+          padding-bottom: 5px;
+          cursor: pointer;
+        }
+     </style>
+  </head>
+  <body>
+  
+    <aside id="sidebar">Playlist</aside>
+  
+    <input type="file" id="files" multiple name="file" />
+    <div id="fileWrapper">Drop Files Here</div>
+
+    <!--<button onclick="readSong()">Load</button>-->
+
+    <audio controls autoplay></audio>
+    
+    <div id="controls">
+      <span id="playPause">
+        <i class="fa fa-play play fa-2x"></i>
+        <i class="fa fa-pause pause fa-2x"></i>
+      </span>
+      
+      <progress value="0" max="100"></progress>
+      <span id="duration">0:00 / 0:00</span>
+      
+      <span id="volumeControls">
+        <i class="fa fa-volume-off volume-down fa-2x"></i>
+        <input id="volume" type="range" min="0" max="10" value="5" />
+        <i class="fa fa-volume-up volume-up fa-2x"></i>
+      </span>
+    </div>
+
+    <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script>
+      var index = 0;
+      var player = $('audio')[0];
+      player.volume = 0.5;
+      
+      /*
+      function readSong() {
+        var files = $('#files').prop('files');
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          $('audio').attr('src', e.target.result);
+        }
+        reader.readAsDataURL(files[index++]); 
+      }
+      */
+      
+      function loadAndPlaySong(song) {
+        // Song not loaded previously
+        if(song.data('raw') === undefined) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            song.data('raw', e.target.result);
+            $('audio').attr('src', e.target.result);
+          }
+          reader.readAsDataURL(song.data('song')); 
+        }
+        // Song already loaded
+        else $('audio').attr('src', song.data('raw')); 
+      }
+      
+      function loadSong(song) {
+        // Song not loaded previously
+        if(song.data('raw') === undefined) {
+          var reader = new FileReader();
+          reader.onload = function(e) {
+            song.data('raw', e.target.result);
+          }
+          reader.readAsDataURL(song.data('song'));
+        }
+      }
+      
+      $('body').on('click', 'li', function () {
+        loadAndPlaySong($(this));
+      });
+      
+      $('#files').change(function() {
+        displaySongList();
+      });
+      
+      function displaySongList() {
+        $('#fileWrapper').html('<ul></ul>');
+        $.each($('#files').prop('files'), function() {
+          $('#fileWrapper ul').append('<li>' + this.name + '</li>');
+          $('#fileWrapper ul li:last-child').data('song', this);
+          loadSong($('#fileWrapper ul li:last-child'));
+        });
+      }
+      
+      player.addEventListener('ended', function() {
+        readSong();
+      });
+      
+      player.addEventListener("timeupdate", function() {
+        var duration = document.getElementById('duration');
+        var s = parseInt(player.currentTime % 60);
+        s = s < 10 ? '0' + s : s;
+        var m = parseInt((player.currentTime / 60) % 60);
+        $('#duration').html(m + ':' + s + ' / ' + player.duration);
+        
+      }, false);
+      
+      var volume = document.getElementById('volume');
+      volume.addEventListener('change', function(){
+          player.volume = parseFloat(this.value / 10);
+      }, false);
+      
+      /*
+      $('.volume-up').click(function() {
+        if(player.volume < 1) player.volume += 0.1;
+      });
+      $('.volume-down').click(function() {
+        if(player.volume > 0) player.volume -= 0.1;
+      });
+      */
+      
+      $('.pause').click(function() {
+        player.pause();
+        $('.pause').hide();
+        $('.play').show();
+      });
+      $('.play').click(function() {
+        player.play();
+        $('.play').hide();
+        $('.pause').show();
+      });
+    </script>
+  </body>
+</html>
